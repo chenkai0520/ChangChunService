@@ -1,0 +1,33 @@
+#left_ul li p 
+			{
+				font-size: 15px;
+				display:block; /* 设为块级元素 */
+				padding:0px 0px; /* 设置内边距 */
+				background:green; /* 设置背景色 */
+				color:#fff; /* 设置文字颜色 */
+			/*	border-bottom:1px solid #000; /* 在下侧加上分隔线 */
+				text-align: left;
+			}
+.left_ccmap	#left_ul .left_li p:hover
+			{
+				background-color: blue;
+				color: red;
+			}
+.left_ccmap
+			{
+				background-color: green;
+				float: left;
+				height: 530px;
+				width: 15%;
+				border: 1;
+			}
+#map
+			{
+				float: left;
+				position:relative;
+				left:0px;
+				right:0px;
+				width:70%;
+				height:530px;	
+				border: 1;		
+			}

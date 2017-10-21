@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			#hn_header
+			{
+				background-color: blue;
+				text-align: center;
+				color: yellow;
+				position: absolute;
+				font-size: 40px;
+				top: 0px;
+				left: 0px;
+				right: 0px;
+			}
+			#hn_nav
+			{
+				background-color: #3A4953;
+				font-size: 14px;
+				position:absolute;
+				top: 40px;
+				left: 0px;
+				right: 0px;
+				color:black;
+			}
+			#hn_nav li 
+			{
+				float:left; /* 往左浮动 */
+				list-style:none; /* 将默认的列表符号去掉 */
+				padding:0; /* 将默认的内边距去掉 */
+				margin:0; /* 将默认的外边距去掉 */
+			}
+			#hn_nav li a 
+			{
+				display:block; /* 将链接设为块级元素 */
+				padding:8px 50px; /* 设置内边距 */
+				background:#3A4953; /* 设置背景色 */
+				color:#fff; /* 设置文字颜色 */
+				text-decoration:none; /* 去掉下划线 */
+				border-right:1px solid #000; /* 在左侧加上分隔线 */
+				text-align: center;
+			}
+			#hn_nav li a:hover 
+			{
+				background:#146C9C; /* 变换背景色 */
+				color:red; /* 变换文字颜色 */
+			}
+			#login__tip_info
+			{
+				position: absolute;
+				top: -10px;
+				right: 0px;
+			}
+			#un_login
+			{
+				position: absolute;
+				top: 30px;
+				right: 0px;
+				color: black;
+			}
+			.hn_li
+			{
+				align-content:center;
+			}
+		</style>
+	</head>
+	<body bgcolor="aliceblue">
+		<header id="hn_header">长春市公共服务平台</header>
+		<ul id="hn_nav">
+			<li class="hn_li"><a href="../map_windows/cc_map.html" target="right">长春市地图</a></li>
+			<li class="hn_li"><a href="../map_windows/unit_inquire.html" target="right">公众单位查询</a></li>
+			<li class="hn_li"><a href="../map_windows/jingDian_inquire.html" target="right">旅游景点</a></li>			
+			<li class="hn_li"><a href="../map_windows/jinJiQingKuang.html" target="right">紧急情况</a></li>
+			<li class="hn_li"><a href="../map_windows/bus_inquire.html" target="right">公交查询</a></li>
+			<li class="hn_li"><a href="../map_windows/weather_inquire.html" target="right">天气查询</a></li>
+			<li class="hn_li"><a href="../map_windows/map_mark.html" target="right">地图注记</a></li>		
+		<!--	<li class="hn_li"><a href="http://127.0.0.1:8090/iserver/iClient/forJavaScript/examples/map_cc_mark.html" target="right">地图注记</a></li>-->	
+			<li class="hn_li"><a href="../others_windows/help.html" target="right">帮助说明</a></li>
+		</ul>
+		<div id="login_info">
+			<p id="login__tip_info">欢迎&nbsp;uername登录</p>			
+			<a id="un_login" href="http://127.0.0.1:8081/WebGis/index.jsp" target="_top"><b>退出</b></a>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,354 @@
+<!DOCTYPE>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>几何查询</title>
+<link rel="stylesheet" href="../../css/map_left.css" />
+<link href='../../css/bootstrap.min.css' rel='stylesheet' />
+<link href='../../css/bootstrap-responsive.min.css' rel='stylesheet' />
+<script src='../../libs/SuperMap.Include.js'></script>
+<script src="../../js/myjs/addmap.js"></script>
+<script type="text/javascript">
+	var chaxuntuceng;
+	var chaxunleixing;
+var map, local, layer, vectorLayer, vectorLayer1, drawPolygon, markerLayer,drawPoint, drawLine,
+style = {
+strokeColor: "#304DBE",
+strokeWidth: 1,
+pointerEvents: "visiblePainted",
+fillColor: "#304DBE",
+fillOpacity: 0.5
+},
+url="http://127.0.0.1:8090/iserver/services/map-changchun/rest/maps/长春市区图";
+var url2="http://127.0.0.1:8090/iserver/services/data-changchun/rest/data";
+function init(){
+layer = new SuperMap.Layer.TiledDynamicRESTLayer("长春市区图", url, {transparent: true, cacheEnabled: true}, {maxResolution:"auto"});
+layer.events.on({"layerInitialized":addLayer});
+vectorLayer = new SuperMap.Layer.Vector("Vector Layer");
+vectorLayer1 = new SuperMap.Layer.Vector("Vector Layer1");
+markerLayer = new SuperMap.Layer.Markers("Markers");
+
+
+//几何圆查询
+drawPolygon1 = new SuperMap.Control.DrawFeature(vectorLayer, SuperMap.Handler.RegularPolygon,{handlerOptions:{sides:50}});
+drawPolygon1.events.on({"featureadded": drawCompleted});
+
+//多边形查询
+drawPolygon2 = new SuperMap.Control.DrawFeature(vectorLayer, SuperMap.Handler.Polygon);
+drawPolygon2.events.on({"featureadded": drawCompleted});
+
+//点查询
+drawPoint = new SuperMap.Control.DrawFeature(vectorLayer, SuperMap.Handler.Point);
+drawPoint.events.on({"featureadded": drawPointCompleted});
+
+//线查询
+drawLine = new SuperMap.Control.DrawFeature(vectorLayer, SuperMap.Handler.Path);
+drawLine.events.on({"featureadded": drawPointCompleted});
+
+//矩形
+
+drawRectangle = new SuperMap.Control.DrawFeature(vectorLayer, SuperMap.Handler.Box);
+drawRectangle.events.on({"featureadded": drawRectangleCompleted});
+
+map = new SuperMap.Map("map",{controls: [
+new SuperMap.Control.LayerSwitcher(),
+new SuperMap.Control.ScaleLine(),
+new SuperMap.Control.Zoom(),
+new SuperMap.Control.Navigation({
+dragPanOptions: {
+enableKinetic: true
+}}),
+drawPolygon1,drawPolygon2,drawPoint,drawLine,drawRectangle]
+});
+}
+
+function addLayer() {
+map.addLayers([layer, vectorLayer, vectorLayer1, markerLayer]);
+map.setCenter(new SuperMap.LonLat(4503.62 , -3861.91), 0);
+}
+function clearStatus(){
+vectorLayer.removeAllFeatures();
+vectorLayer1.removeAllFeatures();
+markerLayer.clearMarkers();
+}
+//画圆
+function drawGeometry1() {
+//先清除上次的显示结果
+clearStatus();
+drawPolygon1.activate();
+}
+//画多边形
+function drawGeometry2() {
+//先清除上次的显示结果
+clearStatus();
+drawPolygon2.activate();
+}
+//画点
+function drawGeometry3() {
+//先清除上次的显示结果
+clearStatus();
+drawPoint.activate();
+}
+//画线
+function drawGeometry4() {
+//先清除上次的显示结果
+clearStatus();
+drawLine.activate();
+}
+//画矩形
+function drawGeometry5() {
+//先清除上次的显示结果
+clearStatus();
+drawRectangle.activate();
+}
+
+function drawCompleted(drawGeometryArgs) {
+var feature = new SuperMap.Feature.Vector();
+feature.geometry = drawGeometryArgs.feature.geometry,
+feature.style = style;
+vectorLayer.addFeatures(feature);
+
+var queryParam, queryByGeometryParameters, queryService;
+queryParam = new SuperMap.REST.FilterParameter({name: chaxuntuceng+"@Changchun"});
+queryByGeometryParameters = new SuperMap.REST.QueryByGeometryParameters({
+queryParams: [queryParam],
+geometry: drawGeometryArgs.feature.geometry,
+spatialQueryMode: SuperMap.REST.SpatialQueryMode.INTERSECT
+});
+queryService = new SuperMap.REST.QueryByGeometryService(url, {
+eventListeners: {
+"processCompleted": processCompleted,
+"processFailed": processFailed
+}
+});
+queryService.processAsync(queryByGeometryParameters);
+}
+function drawPointCompleted(drawGeometryArgs) {
+var feature = new SuperMap.Feature.Vector();
+feature.geometry = drawGeometryArgs.feature.geometry,
+feature.style = style;
+vectorLayer.addFeatures(feature);
+
+var queryParam, queryByGeometryParameters, queryService;
+//queryParam = new SuperMap.REST.FilterParameter({name: "Countries@World"});
+queryParam = new SuperMap.REST.FilterParameter({name: chaxuntuceng+"@Changchun"});
+queryByGeometryParameters = new SuperMap.REST.QueryByGeometryParameters({
+queryParams: [queryParam],
+geometry: drawGeometryArgs.feature.geometry,
+spatialQueryMode: SuperMap.REST.SpatialQueryMode.INTERSECT
+});
+queryService = new SuperMap.REST.QueryByGeometryService(url, {
+eventListeners: {
+"processCompleted": processCompleted,
+"processFailed": processFailed
+}
+});
+queryService.processAsync(queryByGeometryParameters);
+}
+//矩形
+function drawRectangleCompleted(obj) {
+drawRectangle.deactivate();
+//先清除上次的显示结果
+clearStatus();
+
+var feature = obj.feature;
+feature.style = style;
+vectorLayer.addFeatures(feature);
+var queryBounds = feature.geometry.bounds;
+
+var queryParam, queryByBoundsParams, queryService;
+//queryParam = new SuperMap.REST.FilterParameter({name: "Park@Changchun"});//FilterParameter设置查询条件，name是必设的参数，（图层名称格式：数据集名称@数据源别名）
+queryParam = new SuperMap.REST.FilterParameter({name: chaxuntuceng+"@Changchun"});
+queryByBoundsParams = new SuperMap.REST.QueryByBoundsParameters({queryParams: [queryParam], bounds: queryBounds});//queryParams查询过滤条件参数数组。bounds查询范围
+queryService = new SuperMap.REST.QueryByBoundsService(url, {
+eventListeners: {
+"processCompleted": processCompleted,
+"processFailed": processFailed
+}
+});
+queryService.processAsync(queryByBoundsParams);//向服务端传递参数，然后服务端返回对象
+}
+
+function processCompleted(queryEventArgs) {
+drawPolygon1.deactivate();
+drawPolygon2.deactivate();
+drawPoint.deactivate();
+drawLine.deactivate();
+drawRectangle.deactivate();
+var i, j,len, result = queryEventArgs.result;
+if (result && result.recordsets) {
+for (i=0, recordsets=result.recordsets, len=recordsets.length; i<len; i++) {
+if (recordsets[i].features) {
+for (j=0; j<recordsets[i].features.length; j++) {
+var feature = recordsets[i].features[j];
+var point = feature.geometry;
+if(point.CLASS_NAME == SuperMap.Geometry.Point.prototype.CLASS_NAME){
+var size = new SuperMap.Size(44, 33),
+offset = new SuperMap.Pixel(-(size.w/2), -size.h),
+icon = new SuperMap.Icon("../../theme/images/marker.png", size, offset);
+markerLayer.addMarker(new SuperMap.Marker(new SuperMap.LonLat(point.x, point.y), icon));
+
+addGeoTest(point,feature.data.name);
+}else{
+feature.style = style;
+vectorLayer1.addFeatures(feature);
+}
+
+}
+}
+}
+}
+}
+function processFailed(e) {
+alert(e.error.errorMsg);
+}
+function clearFeatures() {
+vectorLayer.removeAllFeatures();
+vectorLayer1.removeAllFeatures();
+markerLayer.clearMarkers();
+}
+</script>
+<script type="text/javascript">
+		function getQuery_select_TT()
+			{
+				var type1;
+				var type2;
+				chaxuntuceng="";
+				chaxunleixing="";			
+				type1 =document.getElementById("left_s_o1");
+				type2 =document.getElementById("left_s_o2");
+				var index1=type1.selectedIndex;
+				var index2=type2.selectedIndex;
+				chaxunleixing= type1.options[index1].value;
+				chaxuntuceng= type2.options[index2].value;
+				//alert(chaxuntuceng);
+				switch(chaxunleixing)
+				{
+					case 'jvxing':
+					drawGeometry5();
+					//alert(chaxuntuceng);
+					break;
+					case 'yuan':
+					drawGeometry1();
+					//alert(chaxuntuceng);
+					break;
+					case 'duobian':
+					drawGeometry2();
+					//alert(chaxuntuceng);
+					break;
+					default:
+					alert("查询参数错误");
+					//alert(chaxuntuceng);
+					break;
+				}
+				
+			}
+		</script>
+		
+		<script class="SQL_q" type="text/javascript">
+			function processCompleted1(getFeaturesEventArgs) {
+				var i, len, features, feature, result = getFeaturesEventArgs.result;
+				if (result && result.features) {
+				features = result.features
+				
+				if(features.length==0)
+				{
+					alert("未查询到有关单位！请检查输入");
+				}
+				
+				for (i=0, len=features.length; i<len; i++) {
+				var point = features[i].geometry,
+				size = new SuperMap.Size(44, 33),
+				offset = new SuperMap.Pixel(-(size.w/2), -size.h),
+				icon = new SuperMap.Icon("../../theme/images/marker.png", size, offset);
+				markerLayer.addMarker(new SuperMap.Marker(new SuperMap.LonLat(point.x, point.y), icon));
+				
+				addGeoTest(point,result.features[i].data.NAME);
+				}
+				}
+			}
+		
+			function getFeaturesBySQL() {
+			vectorLayer.removeAllFeatures();
+			var getFeatureParam, getFeatureBySQLService, getFeatureBySQLParams;
+			
+			getFeatureParam = new SuperMap.REST.FilterParameter({
+			name: chaxuntuceng+"@Changchun",
+			attributeFilter: "name like"+" '%"+chaxunleixing+"%' "
+			});
+			getFeatureBySQLParams = new SuperMap.REST.GetFeaturesBySQLParameters({
+			queryParameter: getFeatureParam,
+			datasetNames:["Changchun:"+chaxuntuceng]
+			});
+			getFeatureBySQLService = new SuperMap.REST.GetFeaturesBySQLService(url2, {
+			eventListeners: {"processCompleted": processCompleted1, "processFailed": processFailed}});
+			
+			getFeatureBySQLService.processAsync(getFeatureBySQLParams);
+			}
+			
+			function getQuery_select_TTSQL()
+			{
+				var type1;
+				var type2;
+				chaxuntuceng="";
+				chaxunleixing="";			
+				type1 =document.getElementById("left_s_o12");
+				type2 =document.getElementById("left_s_o22");
+				var index2=type2.selectedIndex;
+				chaxuntuceng= type2.options[index2].value;
+				chaxunleixing=type1.value;
+				//alert(chaxunleixing+chaxuntuceng);
+				
+				getFeaturesBySQL();
+				
+			}
+		</script>
+</head>
+<body onload="init()">
+	<div class="left_ccmap">
+        	<h4>范围查询</h4>
+			<ul>
+				<li>
+					<select id="left_s_o1" style="width: auto;">
+						  <option value ="jvxing">矩形</option>
+						  <option value ="yuan">圆形</option>
+						  <option value="duobian">多边形</option>
+					</select>
+				</li>
+				<li >
+					<select id="left_s_o2" style="width: auto;">
+					      <option value ="Park">公园</option>
+						  <option value ="Hospital">医院</option>
+						  <option value="School">学校</option>
+						  <option value="Company">公司</option>
+					</select>
+				</li>
+				<li>
+					<input type="button" value="查询" onclick="getQuery_select_TT()"/>
+				</li>
+			</ul>
+			
+			<hr style="color: black;" />
+			<h4>SQL查询</h4>
+			 <ul>
+				<li>
+					<input type="text" id="left_s_o12" style="width:100px;height: auto;" value="支持模糊查询"/>
+				</li>
+				<li >
+					<select id="left_s_o22" style="width: auto;">
+					      <option value ="Park">公园</option>
+						  <option value ="Hospital">医院</option>
+						  <option value="School">学校</option>
+						  <option value="Company">公司</option>
+					</select>
+				</li>
+				<li>
+					<input type="button" value="查询" onclick="getQuery_select_TTSQL()"/>
+				</li>
+			</ul>
+			<hr/>
+			<input type="button" value="清除所绘图层" onclick="clearFeatures()" />
+		</div>
+<div id="map"></div>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>SQL 查询</title>
+<style type="text/css">
+</style>
+<link rel="stylesheet" href="../../css/map_left.css" />
+<link href='../../css/bootstrap.min.css' rel='stylesheet' />
+<link href='../../css/bootstrap-responsive.min.css' rel='stylesheet' />
+<script src='../../libs/SuperMap.Include.js'></script>
+<script src="../../js/myjs/addmap.js"></script>
+<script type="text/javascript">
+	var layername;
+	var	jdname;
+	var size,icon,offset;
+var map, local, layer, vectorLayer,markerLayer,
+style = {
+strokeColor: "#304DBE",
+strokeWidth: 1,
+fillColor: "#304DBE",
+fillOpacity: "0.8"
+},
+url="http://127.0.0.1:8090/iserver/services/map-changchun/rest/maps/长春市区图";
+var url2="http://127.0.0.1:8090/iserver/services/data-changchun/rest/data";
+function init(){
+map = new SuperMap.Map("map",{controls: [
+new SuperMap.Control.LayerSwitcher(),
+new SuperMap.Control.ScaleLine(),
+new SuperMap.Control.Zoom(),
+new SuperMap.Control.Navigation({
+dragPanOptions: {
+enableKinetic: true
+}
+})]
+});
+layer = new SuperMap.Layer.TiledDynamicRESTLayer("长春市区图", url, {transparent: true, cacheEnabled: true}, {maxResolution:"auto"});
+layer.events.on({"layerInitialized":addLayer});
+vectorLayer = new SuperMap.Layer.Vector("Vector Layer");
+markerLayer = new SuperMap.Layer.Markers("Markers");
+}
+
+function addLayer() {
+map.addLayers([layer, vectorLayer,markerLayer]);
+map.setCenter(new SuperMap.LonLat(4503.62 , -3861.91), 0);
+}
+function getFeaturesBySQL() {
+			vectorLayer.removeAllFeatures();
+			markerLayer.clearMarkers();
+			
+			var getFeatureParam, getFeatureBySQLService, getFeatureBySQLParams;
+			
+			getFeatureParam = new SuperMap.REST.FilterParameter({
+			name: layername+"@Changchun",
+			attributeFilter: "name like"+" '%"+jdname+"%' ",
+			fields:["SmID","name"]
+			});
+			getFeatureBySQLParams = new SuperMap.REST.GetFeaturesBySQLParameters({
+			queryParameter: getFeatureParam,
+			datasetNames:["Changchun:"+layername]
+			});
+			getFeatureBySQLService = new SuperMap.REST.GetFeaturesBySQLService(url2, {
+			eventListeners: {"processCompleted": processCompleted3, "processFailed": processFailed}});
+			
+			getFeatureBySQLService.processAsync(getFeatureBySQLParams);
+			}
+function processCompleted1(getFeaturesEventArgs) {
+				var i, len, features, feature, result = getFeaturesEventArgs.result;
+				if (result && result.features) {
+				features = result.features
+				
+				if(features.length==0)
+				{
+					alert("未查询到有关单位！请检查输入");
+				}
+				
+				for (i=0, len=features.length; i<len; i++) {
+				var point = features[i].geometry,
+				size = new SuperMap.Size(44, 33),
+				offset = new SuperMap.Pixel(-(size.w/2), -size.h),
+				icon = new SuperMap.Icon("../../theme/images/marker.png", size, offset);
+				markerLayer.addMarker(new SuperMap.Marker(new SuperMap.LonLat(point.x, point.y), icon));
+				}
+				}
+			}
+function processFailed(e) {
+alert(e.error.errorMsg);
+}
+function clearFeatures() {
+//先清除上次的显示结果
+vectorLayer.removeAllFeatures();
+vectorLayer.refresh();
+markerLayer.clearMarkers();
+}
+
+function getQuery_select_TTSQL()
+			{
+				var type1;
+				var type2;
+				layername="";
+				jdname="";			
+				type1 =document.getElementById("left_jdname");
+				type2 =document.getElementById("left_layername");
+				var index2=type2.selectedIndex;
+				layername= type2.options[index2].value;
+				jdname=type1.value;
+				//alert(jdname+layername);				
+				getFeaturesBySQL();				
+			}
+			
+			// 获取查询结果并显示
+        function processCompleted3(getFeaturesEventArgs) {
+            var result = getFeaturesEventArgs.result;
+            var resultTable = "";
+			//显示查找到的矢量要素
+			if (result && result.features.length>0) {
+				var m=result.featureCount;
+				m=m;
+				resultTable+="<table border='1' bgcolor='#FFFF00'>";
+				resultTable+="<th>"+"SmID"+"</th>";
+				resultTable+="<th>"+"name"+"</th>";
+				for(var i=0;i<m;i++ )
+				{
+				resultTable+="<tr>";				
+				resultTable+="<th>"+result.features[i].data.SmID+"</th>";
+				resultTable+="<th>"+result.features[i].data.name+"</th>";
+				resultTable+="<th>"+i+"</th>";
+				resultTable+="</tr>";
+				
+				var point = result.features[i].geometry;
+				var size = new SuperMap.Size(44, 33);
+				var offset = new SuperMap.Pixel(-(size.w/2), -size.h);
+				var icon = new SuperMap.Icon("../../theme/images/marker.png", size, offset);
+				markerLayer.addMarker(new SuperMap.Marker(new SuperMap.LonLat(point.x, point.y), icon));
+				
+				addGeoTest1(point,"多云转阴；温度：10");
+				}
+				resultTable+="</table>";
+			}
+				else{
+							resultTable = "<p>无查询结果！</p>";
+				}
+                document.getElementById("queryResultPanel").innerHTML = resultTable;
+		}
+        
+        function addGeoTest1(point,info){ 
+var geometry = new SuperMap.Geometry.Point( point.x ,point.y); 
+var pointFeature = new SuperMap.Feature.Vector(geometry); 
+var styleTest = { 
+      label:info, 
+      fontColor:"black", 
+      fontOpacity:"0.5", 
+      fontFamily:"隶书", 
+      fontSize:"1.5em", 
+      fontWeight:"bold", 
+      fontStyle:"italic", 
+      labelSelect:"true", 
+   } 
+         pointFeature.style = styleTest; 
+        vectorLayer.addFeatures([pointFeature]); 
+       }
+</script>
+</head>
+<body onload="init()">
+	<!--
+<div id="toolbar">
+<input type="button" class="btn" value="查询" onclick="getFeaturesBySQL()" />
+<input type="button" class="btn" value="清除" onclick="clearFeatures()" />
+</div>
+-->
+    <div class="left_ccmap">
+<h4>SQL查询</h4>
+			 <ul>
+				<li>
+					<input type="text" id="left_jdname" style="width:100px;height: auto;" value="支持模糊查询"/>
+				</li>
+				<li >
+					<select id="left_layername" style="width: auto;">
+						  <option value="city">城区</option>
+					</select>
+				</li>
+				<li>
+					<input type="button" value="查询" onclick="getQuery_select_TTSQL()"/>
+				</li>
+			</ul>
+			<hr/>
+			<input type="button" value="清除图层" onclick="clearFeatures()" />
+	</div>
+<div id="map"></div>
+
+			<div id="queryResultPanel"></div>
+</body>
+</html>
